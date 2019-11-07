@@ -10,7 +10,7 @@
 
 struct AhoCorasickNode {
   size_t count_of_nested_substrings = 0;
-  size_t is_terminal = 0;
+  size_t is_terminal = 0; // all strings are different, so we don't need to store vector of ids
   // Stores tree structure of nodes.
   std::map<char, AhoCorasickNode> trie_transitions_;
 
@@ -63,8 +63,10 @@ class AhoCorasickBuilder {
   void AddString(std::string string) {
     strings_.push_back(std::move(string));
   }
-
-  size_t Build() {
+  void Reset() {
+    strings_.clear();
+  }
+  size_t BuildAndCalcMaxSizeOfNestedSequence() {
     auto automaton = std::make_unique<AhoCorasick>();
     automaton->root_ = AhoCorasickNode();
     automaton->root_.count_of_nested_substrings = 0;
@@ -139,7 +141,8 @@ class AhoCorasickBuilder {
 
           size_t count_of_nested_substrings_in_prev = curr_node->count_of_nested_substrings;
 
-          size_t count_of_nested_substrings_in_suffix_link = trie_transition.second.suffix_link_->count_of_nested_substrings;
+          size_t count_of_nested_substrings_in_suffix_link =
+              trie_transition.second.suffix_link_->count_of_nested_substrings;
 
           trie_transition.second.count_of_nested_substrings =
               std::max(count_of_nested_substrings_in_prev, count_of_nested_substrings_in_suffix_link);
@@ -160,46 +163,24 @@ class AhoCorasickBuilder {
   std::vector<std::string> strings_;
 };
 
-class NestedSubstringFinderBuilder {
- public:
-  void AddString(std::string string) {
-    strings_.push_back(std::move(string));
-  }
-
-  size_t CalcCountOfNestedSubstrings() {
-    AhoCorasickBuilder aho_corasick_builder;
-    for (const auto &string : strings_) {
-      aho_corasick_builder.AddString(string);
-    }
-    return aho_corasick_builder.Build();
-  }
-
-  void Reset() {
-    strings_.clear();
-  }
-
- private:
-  std::vector<std::string> strings_;
-};
-
-void calc_result() {
+void calculate_max_size_of_nested_substring_sequence() {
   std::string input;
   std::string result;
   size_t count;
   std::cin >> count;
-  NestedSubstringFinderBuilder nested_substring_finder_builder;
+  AhoCorasickBuilder aho_corasick_builder;
   while (count != 0) {
     for (size_t i = 0; i < count; ++i) {
       std::cin >> input;
-      nested_substring_finder_builder.AddString(input);
+      aho_corasick_builder.AddString(input);
     }
-    result += std::to_string(nested_substring_finder_builder.CalcCountOfNestedSubstrings()) + "\n";
+    result += std::to_string(aho_corasick_builder.BuildAndCalcMaxSizeOfNestedSequence()) + "\n";
     std::cin >> count;
-    nested_substring_finder_builder.Reset();
+    aho_corasick_builder.Reset();
   }
   std::cout << result;
 }
 
 int main() {
-  calc_result();
+  calculate_max_size_of_nested_substring_sequence();
 }
